@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic-Tac-Two</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f4f4f4;
+        }
+
+        #game-container {
+            text-align: center;
+        }
+        .tabs {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            background-color: #ddd;
+            border: none;
+            outline: none;
+        }
+        .tab.active {
+            background-color: #333;
+            color: white;
+        }
+        .content {
+            display: none;
+        }
+        .content.active {
+            display: block;
+        }
+        #board {
+            display: inline-grid;
+            grid-template-columns: repeat(5, 60px);
+            grid-gap: 2px;
+            background-color: #333;
+            padding: 2px;
+        }
+
+        .cell {
+            width: 60px;
+            height: 60px;
+            background-color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        #movable-grid {
+            position: absolute;
+            pointer-events: none;
+            border: 5px solid rgb(0, 255, 8);
+            width: 180px;
+            height: 180px;
+        }
+        .rules {
+            font-size: 1.1rem;
+            padding: 10px;
+            background-color: #fff;
+            border: 1px solid #ccc;
+        }
+
+        #instructions {
+            margin-top: 20px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="game-container">
+        <h1>Tic-Tac-Two</h1>
+        <div class="tabs">
+            <button class="tab active" data-target="game">Game</button>
+            <button class="tab" data-target="rules">Rules</button>
+        </div>
+        <div class="content active" id="game">
+            <div id="piece-count">
+                <p>Player X pieces: <span id="x-pieces">4</span></p>
+                <p>Player O pieces: <span id="o-pieces">4</span></p>
+            </div>
+            <div id="board"></div>
+            <div id="movable-grid"></div>
+            <p id="status"></p>
+            <button id="reset-btn">Reset Game</button>
+            <button id="displace-btn" disabled>Displace Piece</button>
+            <div id="instructions">
+                <p>Instructions:</p>
+                <p>After placing 2 pieces, you can either place another piece or move your pieces or move the grid</p>
+                <ul>
+                    <li>Use arrow keys to move the grid, Q, E, Z, C for diagonal grid movements</li>
+                    <li>To displace a piece click on the disable button, then the piece to move and then the final location </li>
+                    <li>Win by getting 3 in a row within the green grid!</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="content" id="rules">
+            <div class="Rules">
+                <h2>How to Play Tic Tac Two</h2>
+                <p>1. The main grid is 5*5 instead of 3*3. But we also have a movable 3*3 grid.</p>
+                <p>2. There are 2 players. Each player gets 4 pieces.</p>
+                <p>3. Players take turns putting their pieces anywhere on the board(5*5).</p>
+                <p>4. After each player has made 2 or more moves, they have the following options: </p>
+                <ul>
+                    <li>a. place another piece </li>
+                    <li>b. move a previously placed piece </li>
+                    <li>c. move the movable 3*3 grid by one space(right/left/up/down/diagonally) </li>
+                </ul>
+                <p>5. The first player to get 3 pieces in a row (up, down, across, or diagonally, within the 3*3 grid) wins.</p>
+            </div>
+        </div>
+
+    </div>
+    <script>
+        const tabs = document.querySelectorAll('.tab');
+        const contents = document.querySelectorAll('.content');
+
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                // Remove active class from all tabs and contents
+                tabs.forEach(t => t.classList.remove('active'));
+                contents.forEach(c => c.classList.remove('active'));
+
+                // Add active class to the clicked tab and corresponding content
+                tab.classList.add('active');
+                document.getElementById(tab.getAttribute('data-target')).classList.add('active');
+            });
+        });
+        
+        const board = document.getElementById('board');
+        const movableGrid = document.getElementById('movable-grid');
+        const statusDisplay = document.getElementById('status');
+        const resetButton = document.getElementById('reset-btn');
+
+
+        let currentPlayer = 'X';
+        let gameState = ['', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''];
+        let movableGridPosition = { x: 1, y: 1 };
+        let piecesPlaced = { X: 0, O: 0 };
+        let availablePieces = { X: 4, O: 4 };
+        let winner = '';
+
+        function updatePieceCount() {
+            document.getElementById('x-pieces').textContent = availablePieces['X'];
+            document.getElementById('o-pieces').textContent = availablePieces['O'];
+        }
+
+        function createBoard() {
+            for (let i = 0; i < 25; i++) {
+                const cell = document.createElement('div');
+                cell.classList.add('cell');
+                cell.setAttribute('data-index', i);
+                cell.addEventListener('click', handleCellClick);
+                board.appendChild(cell);
+            }
+        }
+
+        function updateMovableGrid() {
+            movableGrid.style.left = `${movableGridPosition.x * 62 + board.offsetLeft}px`;
+            movableGrid.style.top = `${movableGridPosition.y * 62 + board.offsetTop}px`;
+        }
+
+        function handleCellClick(event) {
+            const clickedCell = event.target;
+            const clickedCellIndex = parseInt(clickedCell.getAttribute('data-index'));
+
+            if (gameState[clickedCellIndex] !== '' || checkWinner()) return;
+
+            if (piecesPlaced[currentPlayer] < 4) {
+                placePiece(clickedCell, clickedCellIndex);
+            } else {
+                if (gameState[clickedCellIndex] === currentPlayer) {
+                    clickedCell.classList.add('selected');
+                    board.addEventListener('click', movePiece);
+                } else if (gameState[clickedCellIndex] === '') {
+                    placePiece(clickedCell, clickedCellIndex);
+                }
+            }
+            displaceButton.disabled = !(piecesPlaced['X'] >= 2 && piecesPlaced['O'] >= 2);
+        }
+
+        function placePiece(cell, index) {
+            if (availablePieces[currentPlayer] > 0) {
+                gameState[index] = currentPlayer;
+                cell.textContent = currentPlayer;
+                piecesPlaced[currentPlayer]++;
+                availablePieces[currentPlayer]--;
+                updatePieceCount();
+                
+
+                if (checkWinner()) {
+                    statusDisplay.textContent = 'Player ' + winner + ' wins!';
+                    return;
+                }
+
+                if (piecesPlaced['X'] >= 2 && piecesPlaced['O'] >= 2) {
+                    statusDisplay.textContent = 'Player ' + currentPlayer + "'s turn. Place a piece, move a piece, or move the grid.";
+                }
+                // else {
+                switchPlayer();
+                // }
+            } 
+            else {
+                statusDisplay.textContent = 'Player ' + currentPlayer + ' has no more pieces to place. Move a piece or the grid.';
+            }
+        }
+
+        function movePiece(event) {
+            const targetCell = event.target;
+            const targetIndex = parseInt(targetCell.getAttribute('data-index'));
+
+            if (gameState[targetIndex] === '' && targetCell !== event.currentTarget) {
+                const selectedCell = document.querySelector('.cell.selected');
+                const selectedIndex = parseInt(selectedCell.getAttribute('data-index'));
+
+                gameState[targetIndex] = currentPlayer;
+                gameState[selectedIndex] = '';
+
+                targetCell.textContent = currentPlayer;
+                selectedCell.textContent = '';
+                selectedCell.classList.remove('selected');
+
+                board.removeEventListener('click', movePiece);
+
+                if (checkWinner()) {
+                    statusDisplay.textContent = 'Player ' + winner + ' wins!';
+                    return;
+                }
+
+                switchPlayer();
+            }
+        }
+
+        function extractSubgrid(board, startRow, startCol) {
+            // Initialize an empty 3x3 grid
+            let subgrid = [];
+
+            // Loop through the rows and columns of the subgrid
+            for (let i = 0; i < 3; i++) {
+                let row = [];
+                for (let j = 0; j < 3; j++) {
+                    row.push(board[(startRow + i) * 5 + (startCol + j)]);
+                }
+                subgrid.push(row);
+            }
+
+            return subgrid;
+        }
+        function checkWinner() {
+
+            subgrid = extractSubgrid(gameState, movableGridPosition.y, movableGridPosition.x);
+
+            // Check rows and columns
+            for (let i = 0; i < 3; i++) {
+                // Check if all values in a row are the same and not null
+                if (subgrid[i][0] && subgrid[i][0] === subgrid[i][1] && subgrid[i][1] === subgrid[i][2]) {
+                    winner = subgrid[i][0]; // Return the winner ('X' or 'O')
+                    return true
+                }
+                // Check if all values in a column are the same and not null
+                if (subgrid[0][i] && subgrid[0][i] === subgrid[1][i] && subgrid[1][i] === subgrid[2][i]) {
+                    winner = subgrid[0][i]; // Return the winner ('X' or 'O')
+                    return true
+                }
+            }
+
+            // Check diagonals
+            if (subgrid[0][0] && subgrid[0][0] === subgrid[1][1] && subgrid[1][1] === subgrid[2][2]) {
+                winner = subgrid[0][0]; // Return the winner ('X' or 'O')
+                return true
+            }
+            if (subgrid[0][2] && subgrid[0][2] === subgrid[1][1] && subgrid[1][1] === subgrid[2][0]) {
+                winner = subgrid[0][2]; // Return the winner ('X' or 'O')
+                return true
+            }
+
+            // No winner
+            return false;
+        }
+
+        function switchPlayer() {
+            currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+            statusDisplay.textContent = 'Player ' + currentPlayer + "'s turn";
+        }
+
+        function resetGame() {
+            currentPlayer = 'X';
+            gameState = ['', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''];
+            movableGridPosition = { x: 1, y: 1 };
+            piecesPlaced = { X: 0, O: 0 };
+            availablePieces = { X: 4, O: 4 };
+            statusDisplay.textContent = "Player X's turn";
+            updateMovableGrid();
+            updatePieceCount();
+
+            document.querySelectorAll('.cell').forEach(cell => {
+                cell.textContent = '';
+                cell.classList.remove('selected');
+            });
+        }
+
+        function moveGrid(direction) {
+            if (piecesPlaced['X'] < 2 || piecesPlaced['O'] < 2) {
+                statusDisplay.textContent = "Grid movement is not allowed until both players have placed at least 2 pieces.";
+                return;
+            }
+
+            const directions = {
+                'up': { x: 0, y: -1 },
+                'down': { x: 0, y: 1 },
+                'left': { x: -1, y: 0 },
+                'right': { x: 1, y: 0 },
+                'upLeft': { x: -1, y: -1 },
+                'upRight': { x: 1, y: -1 },
+                'downLeft': { x: -1, y: 1 },
+                'downRight': { x: 1, y: 1 }
+            };
+
+            const newX = movableGridPosition.x + directions[direction].x;
+            const newY = movableGridPosition.y + directions[direction].y;
+
+            if (newX >= 0 && newX <= 2 && newY >= 0 && newY <= 2) {
+                movableGridPosition.x = newX;
+                movableGridPosition.y = newY;
+                updateMovableGrid();
+                if (checkWinner()) {
+                    statusDisplay.textContent = 'Player ' + winner + ' wins!';
+                } else {
+                    switchPlayer();
+                }
+            }
+        }
+
+        document.addEventListener('keydown', (event) => {
+            const key = event.key.toLowerCase();
+            const keyToDirection = {
+                'arrowup': 'up',
+                'arrowdown': 'down',
+                'arrowleft': 'left',
+                'arrowright': 'right',
+                'q': 'upLeft',
+                'e': 'upRight',
+                'z': 'downLeft',
+                'c': 'downRight'
+            };
+
+            if (keyToDirection[key]) {
+                moveGrid(keyToDirection[key]);
+            }
+        });
+
+        createBoard();
+        updateMovableGrid();
+        resetButton.addEventListener('click', resetGame);
+        const displaceButton = document.getElementById('displace-btn');
+        displaceButton.disabled = true ;
+        displaceButton.addEventListener('click', activateDisplaceMode);
+
+        function activateDisplaceMode() {
+            if (piecesPlaced[currentPlayer] >= 2) {
+                statusDisplay.textContent = 'Select a piece to move';
+                board.addEventListener('click', selectPieceToMove);
+            } else {
+                statusDisplay.textContent = 'You can only displace pieces after placing all 2 pieces';
+            }
+        }
+
+        function selectPieceToMove(event) {
+            console.log('selected piece to move')
+            const clickedCell = event.target;
+            const clickedCellIndex = parseInt(clickedCell.getAttribute('data-index'));
+
+            if (gameState[clickedCellIndex] === currentPlayer) {
+                clickedCell.textContent = '';
+                availablePieces[currentPlayer]++;
+                piecesPlaced[currentPlayer]--;
+                gameState[clickedCellIndex] = '';
+                clickedCell.classList.add('selected');
+                board.removeEventListener('click', selectPieceToMove);
+                board.addEventListener('click', moveSelectedPiece);
+                statusDisplay.textContent = 'Select a new position for the piece';
+            }
+        }
+
+        function moveSelectedPiece(event) {
+            const targetCell = event.target;
+            const targetIndex = parseInt(targetCell.getAttribute('data-index'));
+
+            if (gameState[targetIndex] === '') {
+                const selectedCell = document.querySelector('.cell.selected');
+                const selectedIndex = parseInt(selectedCell.getAttribute('data-index'));
+
+                gameState[targetIndex] = currentPlayer;
+                gameState[selectedIndex] = '';
+
+                targetCell.textContent = currentPlayer;
+                selectedCell.textContent = '';
+                selectedCell.classList.remove('selected');
+
+                board.removeEventListener('click', moveSelectedPiece);
+
+                if (checkWinner()) {
+                    statusDisplay.textContent = 'Player ' + winner + ' wins!';
+                } else {
+                    switchPlayer();
+                }
+            }
+        }
+
+        resetGame();
+    </script>
+</body>
+
+</html>

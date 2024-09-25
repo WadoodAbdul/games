@@ -1,4 +1,4 @@
-# tic-tac-two
+# [tic-tac-two](https://wadoodabdul.github.io/games/tic_tac_two/src/tic_tac_two.html)
 
 This game is a variation on tic-tac-toe with the following differences - 
 
@@ -10,6 +10,9 @@ This game is a variation on tic-tac-toe with the following differences -
 4b. move a previously placed piece in the 5*5 grid
 4c. move the movable 3*3 grid by one space(right/left/up/down/diagonally)
 5. This carries on until once of the player gets 3 in a row on the movable 3*3 grid.
+
+
+[Game Link](https://wadoodabdul.github.io/games/tic_tac_two/src/tic_tac_two.html)
 
 ---
 
