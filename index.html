@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Games — library</title>
+    <style>
+        :root {
+            --bg: #f3efe6;
+            --bg-card: #fffcf5;
+            --ink: #1c1914;
+            --ink-muted: #5c564a;
+            --accent: #2d4a3e;
+            --accent-hover: #1f342c;
+            --border: #d4cfc3;
+            --shadow: rgba(28, 25, 20, 0.08);
+            --radius: 12px;
+            font-size: clamp(15px, 2.5vw, 17px);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+            background: var(--bg);
+            color: var(--ink);
+            line-height: 1.5;
+        }
+
+        .wrap {
+            max-width: 56rem;
+            margin: 0 auto;
+            padding: clamp(1.75rem, 5vw, 3.5rem) clamp(1.25rem, 4vw, 2rem) 4rem;
+        }
+
+        header {
+            margin-bottom: clamp(2rem, 5vw, 3rem);
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 1.5rem;
+        }
+
+        h1 {
+            font-size: clamp(1.85rem, 4vw, 2.45rem);
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            margin: 0 0 0.35rem;
+            line-height: 1.15;
+        }
+
+        .lede {
+            margin: 0;
+            max-width: 40em;
+            color: var(--ink-muted);
+            font-size: 1.05rem;
+        }
+
+        .grid {
+            display: grid;
+            gap: 1.25rem;
+            grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr));
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 0;
+            overflow: hidden;
+            box-shadow: 0 4px 24px var(--shadow);
+            display: flex;
+            flex-direction: column;
+            transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+        }
+
+        .card-cover {
+            margin: 0;
+            aspect-ratio: 16 / 10;
+            border-bottom: 1px solid var(--border);
+            background: #e8e2d6;
+        }
+
+        .card-cover img {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .card-body {
+            padding: 1.35rem 1.4rem 1.25rem;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-height: 9rem;
+        }
+
+        .card:is(:hover, :focus-within) {
+            border-color: #b8b2a4;
+        }
+
+        .card.available:is(:hover, :focus-within) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(28, 25, 20, 0.12);
+        }
+
+        .card h2 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin: 0 0 0.5rem;
+            letter-spacing: -0.01em;
+        }
+
+        .card p {
+            margin: 0;
+            flex: 1;
+            font-size: 0.92rem;
+            color: var(--ink-muted);
+        }
+
+        .card-footer {
+            margin-top: 1.1rem;
+            padding-top: 0.85rem;
+            border-top: 1px solid var(--border);
+        }
+
+        a.play {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+            font-size: 0.88rem;
+            font-weight: 600;
+            text-decoration: none;
+            color: #fffcf5;
+            background: var(--accent);
+            padding: 0.5rem 0.95rem;
+            border-radius: 8px;
+            letter-spacing: 0.01em;
+        }
+
+        a.play:hover {
+            background: var(--accent-hover);
+        }
+
+        a.play:focus-visible {
+            outline: 2px solid var(--accent);
+            outline-offset: 3px;
+        }
+
+        .badge {
+            font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+            font-size: 0.72rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--ink-muted);
+            margin-bottom: 0.55rem;
+        }
+
+        .card.coming-soon {
+            opacity: 0.92;
+        }
+
+        .card.coming-soon .card-footer {
+            border-top-style: dashed;
+        }
+
+        .soon {
+            font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+            font-size: 0.85rem;
+            color: var(--ink-muted);
+            font-weight: 500;
+        }
+
+        footer {
+            margin-top: 3rem;
+            padding-top: 1.25rem;
+            border-top: 1px solid var(--border);
+            font-size: 0.85rem;
+            color: var(--ink-muted);
+        }
+
+        footer a {
+            color: var(--accent);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrap">
+        <header>
+            <h1>Game library</h1>
+            <p class="lede">Board games and variants I like—play in the browser. More titles and solvers to come.</p>
+        </header>
+
+        <main class="grid" aria-label="Games">
+            <article class="card available">
+                <figure class="card-cover">
+                    <img src="assets/covers/tic-tac-two.svg" width="320" height="200" alt=""
+                        aria-hidden="true" loading="eager" decoding="async">
+                </figure>
+                <div class="card-body">
+                    <span class="badge">Playable</span>
+                    <h2>Tic-Tac-Two</h2>
+                    <p>5×5 board with a movable 3×3 window—get three in a row inside the window to win.</p>
+                    <div class="card-footer">
+                        <a class="play" href="tic_tac_two/src/tic_tac_two.html">Play</a>
+                    </div>
+                </div>
+            </article>
+
+            <article class="card coming-soon">
+                <figure class="card-cover">
+                    <img src="assets/covers/probabilistic-tic-tac-toe.svg" width="320" height="200" alt=""
+                        aria-hidden="true" loading="lazy" decoding="async">
+                </figure>
+                <div class="card-body">
+                    <span class="badge">Coming soon</span>
+                    <h2>Probabilistic tic-tac-toe</h2>
+                    <p>Moves with uncertainty—plan around the odds.</p>
+                    <div class="card-footer">
+                        <span class="soon">Not published yet</span>
+                    </div>
+                </div>
+            </article>
+
+            <article class="card coming-soon">
+                <figure class="card-cover">
+                    <img src="assets/covers/quoridor.svg" width="320" height="200" alt="" aria-hidden="true"
+                        loading="lazy" decoding="async">
+                </figure>
+                <div class="card-body">
+                    <span class="badge">Coming soon</span>
+                    <h2>Quoridor</h2>
+                    <p>Walls, shortest paths, and blocking—classic abstract strategy.</p>
+                    <div class="card-footer">
+                        <span class="soon">Not published yet</span>
+                    </div>
+                </div>
+            </article>
+
+            <article class="card coming-soon">
+                <figure class="card-cover">
+                    <img src="assets/covers/royal-game-of-ur.svg" width="320" height="200" alt=""
+                        aria-hidden="true" loading="lazy" decoding="async">
+                </figure>
+                <div class="card-body">
+                    <span class="badge">Coming soon</span>
+                    <h2>Royal Game of Ur</h2>
+                    <p>Ancient race game with dice and capture—one of the oldest we know.</p>
+                    <div class="card-footer">
+                        <span class="soon">Not published yet</span>
+                    </div>
+                </div>
+            </article>
+
+            <article class="card coming-soon">
+                <figure class="card-cover">
+                    <img src="assets/covers/bulls-and-cows.svg" width="320" height="200" alt="" aria-hidden="true"
+                        loading="lazy" decoding="async">
+                </figure>
+                <div class="card-body">
+                    <span class="badge">Coming soon</span>
+                    <h2>Bulls and cows</h2>
+                    <p>Deduce the hidden code with digit feedback—like Mastermind with numbers.</p>
+                    <div class="card-footer">
+                        <span class="soon">Not published yet</span>
+                    </div>
+                </div>
+            </article>
+        </main>
+
+        <footer>
+            Static site on GitHub Pages —
+            <a href="https://github.com/WadoodAbdul/games">source</a>
+        </footer>
+    </div>
+</body>
+
+</html>
